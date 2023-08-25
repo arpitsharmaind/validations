@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Custom Validation Library</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"
+    />
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <form id="myForm">
+        <div class="form-group">
+          <label for="name">Name*</label>
+          <input
+            type="text"
+            class="form-control"
+            name="name"
+            placeholder="Name"
+          />
+        </div>
+        <div class="form-group">
+          <label for="email">Email*</label>
+          <input
+            type="text"
+            class="form-control"
+            name="email"
+            placeholder="Email"
+          />
+        </div>
+        <div class="form-group">
+          <label for="business_name">Business Name*</label>
+          <input
+            type="text"
+            class="form-control"
+            name="business_name"
+            placeholder="Business Name"
+          />
+        </div>
+        <div class="form-group">
+          <label for="mobile">Mobile*</label>
+          <input
+            type="text"
+            class="form-control"
+            name="mobile"
+            placeholder="Mobile"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="fromDate">From Date*</label>
+          <input
+            type="text"
+            class="form-control datepicker fromdatepicker"
+            name="fromDate"
+            id="fromDate"
+            placeholder="From Date"
+            readonly
+          />
+        </div>
+        <div class="form-group">
+          <label for="toDate">To Date*</label>
+          <input
+            type="text"
+            class="form-control datepicker todatepicker"
+            name="toDate"
+            id="toDate"
+            placeholder="To Date"
+            readonly
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="amount">Amount*</label>
+          <input
+            type="text"
+            class="form-control"
+            name="amount"
+            placeholder="Amount"
+          />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+
+    <script src="./validations.js"></script>
+    <script>
+      $("#myForm").customValidation({
+        rules: {
+          name: ["required", "validName"],
+          email: ["required", "validEmail"],
+          toDate: ["required", "greaterThan[fromDate]"],
+          fromDate: ["required", "lessThan[toDate]"],
+          business_name: ["required", "validBusinessName"],
+          mobile: ["required", "validMobile"],
+          amount: ["required", "validAmount"],
+        },
+        messages: {
+          name: {
+            required: "Name is required.",
+            alphabeticWithSpace: "Please enter alphabetic characters only.",
+          },
+          email: {
+            required: "Email is required.",
+            validEmail: "Please enter a valid email address.",
+          },
+          toDate: {
+            required: "To Date is required.",
+            greaterThan: "To Date must be greater than or equal to From Date.",
+          },
+          fromDate: {
+            required: "From Date is required.",
+            lessThan: "From Date must be less than or equal to To Date.",
+          },
+          amount: {
+            required: "Amount is required.",
+            validAmount: "Please enter a valid amount.",
+          },
+        },
+        success: function () {
+          console.log("Success");
+        },
+      });
+    </script>
+
+    <script>
+      $(document).on("input", "#email", function (e) {
+        var input = $(this);
+        var inputVal = input.val();
+
+        // Remove spaces and limit the input length
+        var sanitizedInput = inputVal.replace(/\s/g, "").slice(0, 30);
+
+        // Set the sanitized value
+        input.val(sanitizedInput);
+      });
+    </script>
+
+    <script>
+      $(function () {
+        let currentDate = new Date();
+
+        $(".fromdatepicker").datepicker({
+          dateFormat: "mm-dd-yy",
+          maxDate: currentDate,
+          onSelect: function (selectedDate) {
+            // Trigger validation for the To Date input
+            // $('#myForm').find('[name="fromDate"]').trigger('blur');
+            $("#myForm").trigger("datepickerSelect", ["fromDate"]);
+            $(this).datepicker("hide");
+          },
+        });
+
+        $(".todatepicker").datepicker({
+          dateFormat: "mm-dd-yy",
+          maxDate: currentDate,
+          onSelect: function (selectedDate) {
+            // Trigger validation for the To Date input
+            // $('#myForm').find('[name="toDate"]').trigger('blur');
+            $("#myForm").trigger("datepickerSelect", ["toDate"]);
+          },
+        });
+      });
+    </script>
+  </body>
+</html>

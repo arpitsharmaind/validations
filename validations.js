@@ -2,9 +2,13 @@
   const customRules = {
     alphabeticWithSpace: /^[A-Za-z\s]+$/,
     validEmail: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i,
-    allowedCharacters: /^[A-Za-z0-9!@#$%^&*()_\-=+{}\[\]:;"'<>,.?\/\\|~`\s]+$/,
+    validBusinessName: /^[A-Za-z0-9!@#$%^&*()_\-=+{}\[\]:;"'<>,.?\/\\|~`\s]+$/,
     validName: /^[A-Za-z]+(?:\s[A-Za-z]+){0,29}(?:\s)?$/,
     validMobile: /^(?!0)(?!(\d)\1+$)\d{10}$/,
+    validWebsite:
+      /^(https?:\/\/)?([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(:[0-9]+)?(\/[^\s]*)?$/,
+    validUsername: /^[A-Za-z0-9]{1,30}$/,
+    validUsernameWithDot: /^[A-Za-z0-9.]{1,30}$/,
     greaterThan: function (value, input, from) {
       const fromValue = $("#" + from).val();
       if (!value || !fromValue) {
@@ -36,56 +40,117 @@
         return false;
       }
     },
-    validAmount: function (value, input) {
-      // Remove non-numeric characters
-      var sanitizedInput = value.replace(/[^0-9.]/g, "");
-
-      // Separate the integer part and the decimal part
-      var parts = sanitizedInput.split(".");
-      var integerPart = parts[0];
-      var decimalPart = parts[1] || "";
-
-      // Limit the integer part to 15 digits
-      if (integerPart.length > 15) {
-        return false;
-      }
-
-      // Combine the integer and decimal parts
-      var sanitizedValue =
-        decimalPart === "" ? integerPart : integerPart + "." + decimalPart;
-
-      var amount = parseFloat(sanitizedValue);
-      if (isNaN(amount)) {
-        return false;
-      }
-
-      // Positive value validation
-      if (amount <= 0) {
-        return false;
-      }
-
-      // Decimal places validation (assuming max 2 decimal places)
-      if (decimalPart.length > 2) {
-        return false;
-      }
-
-      // Range validation (you can adjust min and max values)
-      var minValue = 0;
-      var maxValue = 999999999999999; // 15-digit max value
-      if (amount < minValue || amount > maxValue) {
-        return false;
-      }
-
-      // Non-Zero Amount Validation
-      if (amount === 0) {
-        return false;
-      }
-
-      return true;
-    },
   };
 
   const customMethods = {}; // Object to store custom validation methods
+
+  const functions = {
+    validMobile: function (event) {
+      let input = $(this);
+      let inputVal = $(this).val();
+
+      let originalCursorPosition = input.prop("selectionStart");
+
+      let sanitizedInput = inputVal.replace(/[^\d]/g, "");
+      let maxLength = 10;
+      if (sanitizedInput.length > maxLength) {
+        sanitizedInput = sanitizedInput.slice(0, maxLength);
+      }
+      $(this).val(sanitizedInput);
+
+      // Calculate cursor position shift due to modifications
+      let cursorShift = inputVal.length - sanitizedInput.length;
+
+      // Restore cursor position
+      let newCursorPosition = Math.max(0, originalCursorPosition - cursorShift);
+
+      input.prop("selectionStart", newCursorPosition);
+      input.prop("selectionEnd", newCursorPosition);
+    },
+
+    validName: function (event) {
+      console.log("Inside validName");
+      var input = $(this);
+      var inputVal = input.val();
+      var originalCursorPosition = input.prop("selectionStart");
+
+      // Remove extra spaces and non-alphabetic characters
+      var sanitizedInput = inputVal
+        .replace(/[^A-Za-z\s]+/g, "")
+        .replace(/\s{2,}/g, " ");
+
+      // Ensure the sanitized input respects the max length
+      var maxLength = 60;
+      if (sanitizedInput.length > maxLength) {
+        sanitizedInput = sanitizedInput.slice(0, maxLength);
+      }
+
+      // Set the sanitized value
+      input.val(sanitizedInput);
+
+      // Calculate cursor position shift due to modifications
+      var cursorShift = inputVal.length - sanitizedInput.length;
+
+      // Restore cursor position
+      var newCursorPosition = Math.max(0, originalCursorPosition - cursorShift);
+      input.prop("selectionStart", newCursorPosition);
+      input.prop("selectionEnd", newCursorPosition);
+    },
+
+    validEmail: function (event) {
+      var input = $(this);
+      var inputVal = input.val();
+
+      // Remove spaces and limit the input length
+      var sanitizedInput = inputVal.replace(/\s/g, "").slice(0, 50);
+
+      // Set the sanitized value
+      input.val(sanitizedInput);
+    },
+
+    validBusinessName: function (event) {
+      var input = $(this);
+      var inputVal = input.val();
+
+      // Remove extra spaces and limit the input length
+      var sanitizedInput = inputVal.replace(/\s{2,}/g, " ").slice(0, 60);
+
+      // Set the sanitized value
+      input.val(sanitizedInput);
+    },
+
+    validWebsite: function (event) {
+      var input = $(this);
+      var inputVal = input.val().trim();
+
+      // Trim the input value to a maximum of 1000 characters
+      if (inputVal.length > 1000) {
+        input.val(inputVal.slice(0, 1000));
+      }
+    },
+
+    validUsername: function (event) {
+      var input = $(this);
+      var inputVal = input.val();
+
+      // Remove special characters and limit the input length to 30
+      var sanitizedInput = inputVal.replace(/[^A-Za-z0-9]/g, "").slice(0, 30);
+
+      // Set the sanitized value
+      input.val(sanitizedInput);
+    },
+
+    validUsernameWithDot: function (event) {
+      var input = $(this);
+      var inputVal = input.val();
+
+      // Remove special characters and limit the input length to 30
+      var sanitizedInput = inputVal.replace(/[^A-Za-z0-9.]/g, "").slice(0, 30);
+
+      // Set the sanitized value
+      input.val(sanitizedInput);
+    },
+  };
 
   // Custom validation plugin
   $.fn.customValidation = function (options) {
@@ -108,10 +173,10 @@
       form.on("submit", function (event) {
         event.preventDefault();
         event.stopPropagation();
-        form.find(".error-message").remove(); // Remove previous errors
+        form.find(".error-message").remove();
         let valid = true;
 
-        form.find("input").each(function () {
+        form.find("input, select").each(function () {
           if (!validateInput($(this))) {
             valid = false;
           }
@@ -136,11 +201,6 @@
       });
 
       form.find("input").on("keyup", function () {
-        /* if ($(this).data('blurred')) {
-            const input = $(this);
-            input.next('.error-message').remove(); // Clear existing error
-            validateInput(input);
-          } */
         clearTimeout(typingTimer);
         const input = $(this);
         if (!$(this).data("blurred")) {
@@ -152,6 +212,12 @@
           input.next(".error-message").remove(); // Clear existing error
           validateInput(input);
         }
+      });
+
+      form.find("select").on("change", function () {
+        console.log($(this).val());
+        $(this).next(".error-message").remove();
+        validateInput($(this));
       });
 
       function showError(input, message) {
@@ -170,8 +236,10 @@
         const rules = settings.rules[fieldName];
 
         if (rules) {
-          if (typeof window[rules[1]] === "function") {
-            window[rules[1]].call(this, event); // Call the dynamic function with input and event parameters
+          if (typeof functions[rules[1]] === "function") {
+            functions[rules[1]].call(this, event); // Call the dynamic function with input and event parameters
+          } else if (typeof functions[rules[0]] === "function") {
+            functions[rules[0]].call(this, event);
           }
         }
       });
@@ -185,6 +253,7 @@
         if (rules) {
           input.data("valid", true); // Assume valid initially
           if (rules.includes("required") && value.trim() === "") {
+            console.log("Inside Nested If");
             input.data("valid", false);
             valid = false;
             showError(
@@ -244,55 +313,3 @@
     messages: {},
   };
 })(jQuery);
-
-function validName(event) {
-  var input = $(this);
-  var inputVal = input.val();
-  var originalCursorPosition = input.prop("selectionStart");
-
-  // Remove extra spaces and non-alphabetic characters
-  var sanitizedInput = inputVal
-    .replace(/[^A-Za-z\s]+/g, "")
-    .replace(/\s{2,}/g, " ");
-
-  // Ensure the sanitized input respects the max length
-  var maxLength = 60;
-  if (sanitizedInput.length > maxLength) {
-    sanitizedInput = sanitizedInput.slice(0, maxLength);
-  }
-
-  // Set the sanitized value
-  input.val(sanitizedInput);
-
-  // Calculate cursor position shift due to modifications
-  var cursorShift = inputVal.length - sanitizedInput.length;
-
-  // Restore cursor position
-  var newCursorPosition = Math.max(0, originalCursorPosition - cursorShift);
-  input.prop("selectionStart", newCursorPosition);
-  input.prop("selectionEnd", newCursorPosition);
-}
-
-function validEmail(event) {
-  var input = $(this);
-  var inputVal = input.val();
-
-  // Remove spaces and limit the input length
-  var sanitizedInput = inputVal.replace(/\s/g, "").slice(0, 30);
-
-  // Set the sanitized value
-  input.val(sanitizedInput);
-}
-
-function validAmount(event) {
-  let input = $(this);
-  let inputVal = input.val();
-
-  let sanitizedInput = inputVal.replace(/[^0-9.]/g, "");
-
-  let decimalCount = sanitizedInput.split(".").length - 1;
-  if (decimalCount > 1) {
-    sanitizedInput = sanitizedInput.replace(/\./g, "");
-  }
-  console.log(sanitizedInput);
-}
